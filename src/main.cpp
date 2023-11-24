@@ -46,46 +46,43 @@ void loop()
     delay(5000);           // wait 5 seconds for next scan
 } */
 
-#include "DHTesp.h" // Click here to get the library: http://librarymanager/All#DHTesp
-
-#ifdef ESP32
-#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
-#error Select ESP8266 board.
-#endif
-
-DHTesp dht;
-
-void setup()
-{
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
-  String thisBoard= ARDUINO_BOARD;
-  Serial.println(thisBoard);
-
-  // Autodetect is not working reliable, don't use the following line
-  // dht.setup(17);
-  // use this instead: 
-  dht.setup(17, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
+// Teploměr a vlhkoměr DHT11/22
+// připojení knihovny DHT
+#include "DHT.h"
+// nastavení čísla pinu s připojeným DHT senzorem
+#define pinDHT 0
+// odkomentování správného typu čidla
+#define typDHT11 DHT11 // DHT 11
+//#define typDHT22 DHT22 // DHT 22 (AM2302)
+// inicializace DHT senzoru s nastaveným pinem a typem senzoru
+DHT mojeDHT(pinDHT, typDHT11);
+void setup() {
+// komunikace přes sériovou linku rychlostí 9600 baud
+Serial.begin(115200);
+// zapnutí komunikace s teploměrem DHT
+mojeDHT.begin();
+pinMode(pinDHT, INPUT_PULLUP);
 }
-
-void loop()
-{
-  delay(dht.getMinimumSamplingPeriod());
-
-  float humidity = dht.getHumidity();
-  float temperature = dht.getTemperature();
-
-  Serial.print(dht.getStatusString());
-  Serial.print("\t");
-  Serial.print(humidity, 1);
-  Serial.print("\t\t");
-  Serial.print(temperature, 1);
-  Serial.print("\t\t");
-  Serial.print(dht.toFahrenheit(temperature), 1);
-  Serial.print("\t\t");
-  Serial.print(dht.computeHeatIndex(temperature, humidity, false), 1);
-  Serial.print("\t\t");
-  Serial.println(dht.computeHeatIndex(dht.toFahrenheit(temperature), humidity, true), 1);
-  delay(2000);
+void loop() {
+// pomocí funkcí readTemperature a readHumidity načteme
+// do proměnných tep a vlh informace o teplotě a vlhkosti,
+// čtení trvá cca 250 ms
+float tep = mojeDHT.readTemperature();
+float vlh = mojeDHT.readHumidity();
+// kontrola, jestli jsou načtené hodnoty čísla pomocí funkce isnan
+if (isnan(tep) || isnan(vlh)) {
+ // při chybném čtení vypiš hlášku
+ Serial.println("Chyba pri cteni z DHT senzoru!");
+} else {
+ // pokud jsou hodnoty v pořádku,
+ // vypiš je po sériové lince
+ Serial.print("Teplota: ");
+ Serial.print(tep);
+ Serial.print(" stupnu Celsia, ");
+ Serial.print("vlhkost: ");
+ Serial.print(vlh);
+ Serial.println(" %");
+}
+// pauza pro přehlednější výpis
+delay(2000);
 }
