@@ -56,6 +56,7 @@ void loop()
 //#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
 //#error Select ESP8266 board.
 #endif
+//********Kvalita Vzduchu***********
 
 #define AirQuality  1
 
@@ -78,12 +79,16 @@ void loop()
 // I2C address
 #define AS3935_I2C_ADDR       AS3935_ADD3
 volatile int8_t AS3935IsrTrig = 0;
-//**************************************
 
+//**************Teplota***********
 const int TempMain = 4;
 OneWire oneWireDS(TempMain);
 DallasTemperature temp(&oneWireDS);
+//***********Vlhkost************
+const int DHTpin = 17;
 
+//**************UV index*************
+const int UVread = 5;
 
 void AS3935_ISR();
 
@@ -96,8 +101,7 @@ float Readings[5] = {0,0,0,0,0}; //Teplota, Vlhkost, Bouřka[km], UVindex, Kvali
 
 void setup()
 {
-  
-
+  analogReadResolution(8);
   Serial.begin(115200);
   Serial.println();
   Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
@@ -107,7 +111,7 @@ void setup()
   // Autodetect is not working reliable, don't use the following line
   // dht.setup(17);
   // use this instead: 
-  dht.setup(17, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
+  dht.setup(DHTpin, DHTesp::DHT11); // Connect DHT sensor to GPIO 17
 
 
   Serial.println("DFRobot AS3935 lightning sensor begin!");
@@ -156,8 +160,9 @@ void loop()
   Serial.println(dht.computeHeatIndex(dht.toFahrenheit(temperature), humidity, true), 1);
   delay(2000);
 
+  Readings[1] = dht.getHumidity();
 
-   // It does nothing until an interrupt is detected on the IRQ pin.
+  // It does nothing until an interrupt is detected on the IRQ pin.
   while (AS3935IsrTrig == 0) {delay(1);}
   delay(5);
 
@@ -185,9 +190,27 @@ void loop()
     Serial.println("Noise level too high!");
   }
 
+  //Teplota
   temp.requestTemperatures();
-  Readings[1] = int(temp.getTempCByIndex(0));
+  Readings[0] = int(temp.getTempCByIndex(0));
 
+  //UV
+  int UVvalue = analogRead(UVread);
+  if( UVvalue < 20){Readings[3] = 0;}
+  else if(UVvalue < 46){Readings[3] = 1;}
+  else if(UVvalue < 65){Readings[3] = 2;}
+  else if(UVvalue < 83){Readings[3] = 3;}
+  else if(UVvalue < 103){Readings[3] = 4;}
+  else if(UVvalue < 124){Readings[3] = 5;}
+  else if(UVvalue < 144){Readings[3] = 6;}
+  else if(UVvalue < 162){Readings[3] = 7;}
+  else if(UVvalue < 180){Readings[3] = 8;}
+  else if(UVvalue < 200){Readings[3] = 9;}
+  else if(UVvalue < 221){Readings[3] = 10;}
+  else{Readings[3] = 11;}
+
+
+  Readings[4] = airQuality.getPPM();
 }
 
 void AS3935_ISR()
