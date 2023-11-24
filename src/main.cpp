@@ -49,6 +49,8 @@ void loop()
 #include "DHTesp.h" // Click here to get the library: http://librarymanager/All#DHTesp
 #include "DFRobot_AS3935_I2C.h"
 #include "MQ135.h"
+#include "OneWire.h"
+#include "DallasTemperature.h"
 
 #ifdef ESP32
 //#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
@@ -78,16 +80,24 @@ void loop()
 volatile int8_t AS3935IsrTrig = 0;
 //**************************************
 
+const int TempMain = 4;
+OneWire oneWireDS(TempMain);
+DallasTemperature temp(&oneWireDS);
+
+
 void AS3935_ISR();
 
 DHTesp dht;
 DFRobot_AS3935_I2C  lightning0((uint8_t)IRQ_PIN, (uint8_t)AS3935_I2C_ADDR);
 MQ135 airQuality = MQ135(AirQuality);
 
+float Readings[5] = {0,0,0,0,0}; //Teplota, Vlhkost, Bouřka[km], UVindex, KvalitaVzduchu, 
 
 
 void setup()
 {
+  
+
   Serial.begin(115200);
   Serial.println();
   Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
@@ -100,7 +110,6 @@ void setup()
   dht.setup(17, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
 
 
-  Serial.begin(115200);
   Serial.println("DFRobot AS3935 lightning sensor begin!");
 
   while (lightning0.begin() != 0){
@@ -175,6 +184,10 @@ void loop()
   }else if (intSrc == 3){
     Serial.println("Noise level too high!");
   }
+
+  temp.requestTemperatures();
+  Readings[1] = int(temp.getTempCByIndex(0));
+
 }
 
 void AS3935_ISR()
