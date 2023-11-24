@@ -111,18 +111,6 @@ void setup()
   String thisBoard= ARDUINO_BOARD;
   Serial.println(thisBoard);
 
-<<<<<<< HEAD
-  temp.begin();
-
-   /* if (! sht31.begin(0x45))  // alternatively 0x44, depends on ADDR pin
-  {
-    Serial.println("SHT31 not found");
-    Serial.println("Check the connection");
-    while (1) delay(1);
-  } */
-=======
-
->>>>>>> d513c50bcc979a6f9039c8f5406f118f1ef8bb2f
   // Autodetect is not working reliable, don't use the following line
   // dht.setup(17);
   // use this instead: 
@@ -176,7 +164,6 @@ void loop()
 
   //Teplota
 
-<<<<<<< HEAD
   temp.requestTemperatures();
   Readings[0] = int(temp.getTempCByIndex(0));
   //Readings[0] = sht31.readTemperature();
@@ -186,17 +173,6 @@ void loop()
   //Vlhkost
   //Readings[1] = sht31.readHumidity();
   Readings[1] = dht.getHumidity();
-=======
-  //temp.requestTemperatures();
-  //Readings[0] = int(temp.getTempCByIndex(0));
-  //Readings[0] = sht31.readTemperature();
-  Readings[0] = dht.getTemperature();
-
-
-  //Vlhkost
-  Readings[1] = dht.getHumidity();
-  //Readings[1] = sht31.readHumidity();
->>>>>>> d513c50bcc979a6f9039c8f5406f118f1ef8bb2f
 
   //UV
   int UVvalue = analogRead(UVread);
@@ -215,7 +191,7 @@ void loop()
 
 
   Readings[4] = airQuality.getPPM();
-  
+
   Serial.println(Readings[0]);
   Serial.println(Readings[1]);
   Serial.println(UVvalue);
