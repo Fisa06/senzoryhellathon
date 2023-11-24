@@ -51,7 +51,7 @@ void loop()
 #include "MQ135.h"
 #include "OneWire.h"
 #include "DallasTemperature.h"
-//#include "Adafruit_SHT31.h"
+#include "Adafruit_SHT31.h"
 
 #ifdef ESP32
 //#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
@@ -82,11 +82,11 @@ void loop()
 volatile int8_t AS3935IsrTrig = 0;
 
 //**************Teplota***********
-const int TempMain = 4;
-OneWire oneWireDS(TempMain);
-DallasTemperature temp(&oneWireDS);
+//const int TempMain = 4;
+//OneWire oneWireDS(TempMain);
+//DallasTemperature temp(&oneWireDS);
 //***********Vlhkost************
-const int DHTpin = 17;
+//const int DHTpin = 17;
 
 //**************UV index*************
 const int UVread = 5;
@@ -97,6 +97,7 @@ DHTesp dht;
 DFRobot_AS3935_I2C  lightning0((uint8_t)IRQ_PIN, (uint8_t)AS3935_I2C_ADDR);
 MQ135 airQuality = MQ135(AirQuality);
 
+Adafruit_SHT31 sht31 = Adafruit_SHT31();
 
 float Readings[5] = {0,0,0,0,0}; //Teplota, Vlhkost, Bouřka[km], UVindex, KvalitaVzduchu, 
 
@@ -110,10 +111,16 @@ void setup()
   String thisBoard= ARDUINO_BOARD;
   Serial.println(thisBoard);
 
+   if (! sht31.begin(0x45))  // alternatively 0x44, depends on ADDR pin
+  {
+    Serial.println("SHT31 not found");
+    Serial.println("Check the connection");
+    while (1) delay(1);
+  }
   // Autodetect is not working reliable, don't use the following line
   // dht.setup(17);
   // use this instead: 
-  dht.setup(DHTpin, DHTesp::DHT11); // Connect DHT sensor to GPIO 17
+  //dht.setup(DHTpin, DHTesp::DHT11); // Connect DHT sensor to GPIO 17
 
 
   Serial.println("DFRobot AS3935 lightning sensor begin!");
@@ -176,6 +183,7 @@ void loop()
   if (intSrc == 1){
     // Get rid of non-distance data
     uint8_t lightningDistKm = lightning0.getLightningDistKm();
+    Readings[2] = lightningDistKm;
     Serial.println("Lightning occurs!");
     Serial.print("Distance: ");
     Serial.print(lightningDistKm);
@@ -193,8 +201,14 @@ void loop()
   }
 
   //Teplota
-  temp.requestTemperatures();
-  Readings[0] = int(temp.getTempCByIndex(0));
+
+  //temp.requestTemperatures();
+  //Readings[0] = int(temp.getTempCByIndex(0));
+  Readings[0] = sht31.readTemperature();
+
+
+  //Vlhkost
+  Readings[1] = sht31.readHumidity();
 
   //UV
   int UVvalue = analogRead(UVread);
