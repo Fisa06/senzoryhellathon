@@ -51,6 +51,7 @@ void loop()
 #include "MQ135.h"
 #include "OneWire.h"
 #include "DallasTemperature.h"
+//#include "Adafruit_SHT31.h"
 
 #ifdef ESP32
 //#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
@@ -67,7 +68,7 @@ void loop()
 #define IRQ_PIN       2
 #endif
 // Antenna tuning capcitance (must be integer multiple of 8, 8 - 120 pf)
-#define AS3935_CAPACITANCE   96
+#define AS3935_CAPACITANCE   32
 // Indoor/outdoor mode selection
 #define AS3935_INDOORS       0
 #define AS3935_OUTDOORS      1
@@ -95,6 +96,7 @@ void AS3935_ISR();
 DHTesp dht;
 DFRobot_AS3935_I2C  lightning0((uint8_t)IRQ_PIN, (uint8_t)AS3935_I2C_ADDR);
 MQ135 airQuality = MQ135(AirQuality);
+
 
 float Readings[5] = {0,0,0,0,0}; //Teplota, Vlhkost, Bouřka[km], UVindex, KvalitaVzduchu, 
 
