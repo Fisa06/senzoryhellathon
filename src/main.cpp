@@ -86,7 +86,7 @@ volatile int8_t AS3935IsrTrig = 0;
 //OneWire oneWireDS(TempMain);
 //DallasTemperature temp(&oneWireDS);
 //***********Vlhkost************
-//const int DHTpin = 17;
+const int DHTpin = 17;
 
 //**************UV index*************
 const int UVread = 5;
@@ -111,12 +111,7 @@ void setup()
   String thisBoard= ARDUINO_BOARD;
   Serial.println(thisBoard);
 
-   if (! sht31.begin(0x45))  // alternatively 0x44, depends on ADDR pin
-  {
-    Serial.println("SHT31 not found");
-    Serial.println("Check the connection");
-    while (1) delay(1);
-  }
+
   // Autodetect is not working reliable, don't use the following line
   // dht.setup(17);
   // use this instead: 
@@ -204,11 +199,13 @@ void loop()
 
   //temp.requestTemperatures();
   //Readings[0] = int(temp.getTempCByIndex(0));
-  Readings[0] = sht31.readTemperature();
+  //Readings[0] = sht31.readTemperature();
+  Readings[0] = dht.getTemperature();
 
 
   //Vlhkost
-  Readings[1] = sht31.readHumidity();
+  Readings[1] = dht.getHumidity();
+  //Readings[1] = sht31.readHumidity();
 
   //UV
   int UVvalue = analogRead(UVread);
