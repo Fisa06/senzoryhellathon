@@ -59,6 +59,7 @@ void loop()
 //********Kvalita Vzduchu***********
 
 #define AirQuality  1
+const int Power = 6;
 
 //***********Blesky**************
 #if defined(ESP32) || defined(ESP8266)
@@ -193,8 +194,9 @@ void loop()
 
   //Teplota
 
-  temp.requestTemperatures();
-  Readings[0] = int(temp.getTempCByIndex(0));
+  if(bmp->takeForcedMeasurement()) {
+    Readings[0] = bmp->readTemperature();
+  }
   //Readings[0] = sht31.readTemperature();
   //Readings[0] = dht.getTemperature();
 
