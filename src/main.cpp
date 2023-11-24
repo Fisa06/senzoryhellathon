@@ -51,23 +51,37 @@ void loop()
 #include "MQ135.h"
 
 #ifdef ESP32
-#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
+//#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
 //#error Select ESP8266 board.
 #endif
 
 #define AirQuality  1
 
-#define IRQ_PIN    0
-#define StormI2C    AS3935_ADD3
-#define AS3935_MODE 1 // 0-indoor 1-outdoor
-#define AS3935_DIST 1
+//***********Blesky**************
+#if defined(ESP32) || defined(ESP8266)
+#define IRQ_PIN       0
+#else
+#define IRQ_PIN       2
+#endif
+// Antenna tuning capcitance (must be integer multiple of 8, 8 - 120 pf)
 #define AS3935_CAPACITANCE   96
+// Indoor/outdoor mode selection
+#define AS3935_INDOORS       0
+#define AS3935_OUTDOORS      1
+#define AS3935_MODE          AS3935_INDOORS
+// Enable/disable disturber detection
+#define AS3935_DIST_DIS      0
+#define AS3935_DIST_EN       1
+#define AS3935_DIST          AS3935_DIST_EN
+// I2C address
+#define AS3935_I2C_ADDR       AS3935_ADD3
 volatile int8_t AS3935IsrTrig = 0;
+//**************************************
 
 void AS3935_ISR();
 
 DHTesp dht;
-DFRobot_AS3935_I2C  lightning0((uint8_t)IRQ_PIN, (uint8_t)StormI2C);
+DFRobot_AS3935_I2C  lightning0((uint8_t)IRQ_PIN, (uint8_t)AS3935_I2C_ADDR);
 MQ135 airQuality = MQ135(AirQuality);
 
 
