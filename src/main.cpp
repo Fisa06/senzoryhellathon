@@ -46,12 +46,11 @@ void loop()
     delay(5000);           // wait 5 seconds for next scan
 } */
 
-#include "DHTesp.h" // Click here to get the library: http://librarymanager/All#DHTesp
 #include "DFRobot_AS3935_I2C.h"
 #include "MQ135.h"
 #include "OneWire.h"
 #include "DallasTemperature.h"
-#include "Adafruit_SHT31.h"
+#include <Adafruit_BMP280.h>
 
 #ifdef ESP32
 //#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
@@ -91,15 +90,22 @@ const int DHTpin = 17;
 //**************UV index*************
 const int UVread = 5;
 
+//**************Dešť*************
+const int Rain = 4;
+
+//**************Půda*************
+const int Soil = 3;
+
 void AS3935_ISR();
 
-DHTesp dht;
 DFRobot_AS3935_I2C  lightning0((uint8_t)IRQ_PIN, (uint8_t)AS3935_I2C_ADDR);
 MQ135 airQuality = MQ135(AirQuality);
 
+Adafruit_BMP280* bmp; // I2C
+
 //Adafruit_SHT31 sht31 = Adafruit_SHT31();
 
-float Readings[5] = {0,0,0,0,0}; //Teplota, Vlhkost, Bouřka[km], UVindex, KvalitaVzduchu, 
+float Readings[8] = {0,0,0,0,0,0,0,0}; //Teplota, Vlhkost, Bouřka[km], UVindex, KvalitaVzduchu, Dešť, Půda, Tlak
 
 
 void setup()
@@ -110,11 +116,44 @@ void setup()
   Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
   String thisBoard= ARDUINO_BOARD;
   Serial.println(thisBoard);
+  Wire.begin(8,9);
+  bmp = new Adafruit_BMP280(&Wire);
+  if (!bmp->begin()) {
+    Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+                      "try a different address!"));
+    while (1) delay(10);
+  }
 
+  /* Default settings from datasheet. */
+  bmp->setSampling(Adafruit_BMP280::MODE_FORCED,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+  delay(500);
+  if (bmp->takeForcedMeasurement()) {
+    // can now print out the new measurements
+    Serial.print(F("Temperature = "));
+    Serial.print(bmp->readTemperature());
+    Serial.println(" *C");
+
+    Serial.print(F("Pressure = "));
+    Serial.print(bmp->readPressure());
+    Serial.println(" Pa");
+
+    Serial.print(F("Approx altitude = "));
+    Serial.print(bmp->readAltitude(1013.25)); /* Adjusted to local forecast! */
+    Serial.println(" m");
+
+    Serial.println();
+    delay(2000);
+  } else {
+    Serial.println("Forced measurement failed!");
+  }
+  delay(10000);
   // Autodetect is not working reliable, don't use the following line
   // dht.setup(17);
   // use this instead: 
-  dht.setup(DHTpin, DHTesp::DHT11); // Connect DHT sensor to GPIO 17
 
 
  
@@ -123,16 +162,6 @@ void setup()
 
 void loop()
 {
-  delay(dht.getMinimumSamplingPeriod());
-
-  float humidity = dht.getHumidity();
-  float temperature = dht.getTemperature();
-
-  
-  delay(2000);
-
-  Readings[1] = dht.getHumidity();
-
  /*  // It does nothing until an interrupt is detected on the IRQ pin.
   while (AS3935IsrTrig == 0) {delay(1);}
   delay(5);
@@ -172,7 +201,16 @@ void loop()
 
   //Vlhkost
   //Readings[1] = sht31.readHumidity();
-  Readings[1] = dht.getHumidity();
+  Readings[1] = 0.0;
+  
+
+  Readings[5] = analogRead(Rain);
+
+  Readings[6] = analogRead(Soil);
+
+  if(bmp->takeForcedMeasurement()) {
+    Readings[7] = bmp->readPressure();
+  }
 
   //UV
   int UVvalue = analogRead(UVread);
